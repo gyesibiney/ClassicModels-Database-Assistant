@@ -2,23 +2,21 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import sqlite3
 import gradio as gr
 
-# Load small model
+# Load small text-to-SQL model with slow tokenizer
 model_name = "mrm8488/t5-small-finetuned-wikiSQL"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
-# Load SQLite DB
-DB_PATH = "classicmodels.db"
-conn = sqlite3.connect(DB_PATH)
+# Setup DB
+conn = sqlite3.connect("classicmodels.db")
 cursor = conn.cursor()
 
-# Initialize the database
+# Initialize DB from .sql file
 with open("mysqlsampledatabase.sql", "r") as f:
-    conn.executescript(f.read())
+    cursor.executescript(f.read())
 conn.commit()
 
-# Function to handle user query
 def chatbot(nl_query):
     try:
         input_text = f"translate English to SQL: {nl_query}"
@@ -32,6 +30,6 @@ def chatbot(nl_query):
 gr.Interface(fn=chatbot,
              inputs="text",
              outputs="text",
-             title="Chat with SQL Database",
-             description="Ask natural language questions and convert to SQL using T5-small model."
+             title="Chat with SQL Database (T5-small)",
+             description="Ask questions about your database in natural language"
 ).launch()
