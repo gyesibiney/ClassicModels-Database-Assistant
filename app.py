@@ -1,50 +1,37 @@
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import sqlite3
 import gradio as gr
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-import torch
-import os
 
-# Load the tokenizer and model
-model_id = "defog/sqlcoder"
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32)
-generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+# Load small model
+model_name = "mrm8488/t5-small-finetuned-wikiSQL"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
-# Set up SQLite DB
+# Load SQLite DB
 DB_PATH = "classicmodels.db"
-if not os.path.exists(DB_PATH):
-    conn = sqlite3.connect(DB_PATH)
-    with open("mysqlsampledatabase.sql", "r") as f:
-        conn.executescript(f.read())
-    conn.commit()
-else:
-    conn = sqlite3.connect(DB_PATH)
+conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
-# Function to convert NL to SQL using HF model
-def generate_sql(nl_query):
-    prompt = f"-- Given the classicmodels database\n-- Question: {nl_query}\nSELECT"
-    output = generator(prompt, max_new_tokens=100, do_sample=False)[0]['generated_text']
-    
-    # Extract the SQL (from after 'SELECT')
-    start = output.find("SELECT")
-    sql = output[start:].strip().split(";")[0]
-    return sql
+# Initialize the database
+with open("mysqlsampledatabase.sql", "r") as f:
+    conn.executescript(f.read())
+conn.commit()
 
-# Chatbot function
+# Function to handle user query
 def chatbot(nl_query):
     try:
-        sql = generate_sql(nl_query)
+        input_text = f"translate English to SQL: {nl_query}"
+        sql = pipe(input_text, max_length=128, do_sample=False)[0]["generated_text"]
         cursor.execute(sql)
         result = cursor.fetchall()
-        return f"SQL: {sql}\n\nResult:\n{result if result else 'No data found.'}"
+        return f"SQL: {sql}\n\nResults:\n{result if result else 'No data found.'}"
     except Exception as e:
-        return f"Error: {e}"
+        return f"Error: {str(e)}"
 
-# Gradio interface
 gr.Interface(fn=chatbot,
              inputs="text",
              outputs="text",
-             title="Chat with SQL Database (Hugging Face)",
-             description="Ask a question about the classicmodels database (e.g. 'List customers in USA')"
-             ).launch()
+             title="Chat with SQL Database",
+             description="Ask natural language questions and convert to SQL using T5-small model."
+).launch()
