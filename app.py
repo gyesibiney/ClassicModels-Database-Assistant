@@ -11,12 +11,17 @@ def chatbot(nl_query):
 
     # Lazy load model on first request
     if pipe is None:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+        try:
+            print("🔄 Loading model...")
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+            print("✅ Model loaded.")
+        except Exception as e:
+            return f"Model failed to load: {e}"
 
     try:
-        # Open DB connection inside the function (thread-safe)
+        print("🔗 Connecting to DB...")
         with sqlite3.connect("classicmodels.db") as conn:
             cursor = conn.cursor()
             prompt = f"Convert this to SQL: {nl_query}"
@@ -26,6 +31,7 @@ def chatbot(nl_query):
 
         return f"SQL: {sql}\n\nResult:\n{result if result else 'No data found.'}"
     except Exception as e:
+        print("❌ Error:", str(e))
         return f"Error: {str(e)}"
 
 gr.Interface(fn=chatbot,
@@ -34,4 +40,3 @@ gr.Interface(fn=chatbot,
              title="Chat with SQL Database",
              description="Ask natural language questions. Example: 'List customers from France.'"
 ).launch(prevent_thread_lock=True)
-
