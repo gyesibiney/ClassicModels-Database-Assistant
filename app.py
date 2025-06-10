@@ -8,8 +8,8 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
-# Load the SQLite database
-conn = sqlite3.connect("classicmodels.db")
+# Load the SQLite database with thread-safe option
+conn = sqlite3.connect("classicmodels.db", check_same_thread=False)
 cursor = conn.cursor()
 
 def chatbot(nl_query):
