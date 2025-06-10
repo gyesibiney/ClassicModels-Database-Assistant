@@ -13,7 +13,7 @@ conn = sqlite3.connect("classicmodels.db")
 cursor = conn.cursor()
 
 # Initialize DB from .sql file
-with open("mysqlsampledatabase.sql", "r") as f:
+with open("classicmodels.db", "r") as f:
     cursor.executescript(f.read())
 conn.commit()
 
