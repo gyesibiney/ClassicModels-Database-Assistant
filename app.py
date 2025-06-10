@@ -34,3 +34,4 @@ gr.Interface(fn=chatbot,
              title="Chat with SQL Database",
              description="Ask natural language questions. Example: 'List customers from France.'"
 ).launch(prevent_thread_lock=True)
+
