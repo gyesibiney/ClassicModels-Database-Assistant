@@ -1,7 +1,11 @@
-gradio
-google-generativeai 
-sqlite3 
-python-dotenv
+#gradio
+#google-generativeai 
+#sqlite3 
+#python-dotenv
 os
 re
 functools
+google-generativeai>=0.3.0
+gradio>=3.0.0
+python-dotenv>=0.19.0
+sqlite3>=2.6.0
