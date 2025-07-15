@@ -8,6 +8,14 @@ import time
 from functools import lru_cache
 
 
+# This will automatically get the secret from Hugging Face
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+if not GEMINI_API_KEY:
+    raise ValueError("No Gemini API key found. Please set GEMINI_API_KEY secret in Hugging Face.")
+
+#genai.configure(api_key=GEMINI_API_KEY)
+
 # Load Gemini API key
 load_dotenv()
 model = genai.GenerativeModel("gemini-2.0-flash-001")
