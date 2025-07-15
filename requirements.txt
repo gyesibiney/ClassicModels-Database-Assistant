@@ -1,6 +1,7 @@
 gradio
-transformers
-torch
 google-generativeai 
 sqlite3 
 python-dotenv
+os
+re
+functools
