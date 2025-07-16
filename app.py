@@ -68,27 +68,25 @@ llm_model = ChatGoogleGenerativeAI(
 
 # 4. Proper prompt template
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a ClassicModels database expert. Follow these rules:
-1. Use these relationships:
-   - customers → orders → orderdetails → products → productlines
-   - employees → offices
-   - customers → payments
-2. Format currency as USD ($1,000.00)
-3. Use dates as YYYY-MM-DD
-4. Never modify data
-5. Schema: {schema}"""),
+    ("system", """You are a SQL expert analyzing the ClassicModels database. Follow these rules:
+1. Use simple, direct SQL queries when possible.
+2. If a query fails, try a different approach instead of retrying.
+3. Schema: {schema}
+4. Available tables: products, customers, orders, employees, offices, payments, orderdetails, productlines.
+5. Never modify data.
+6. Respond concisely."""),
     ("human", "{input}"),
     MessagesPlaceholder("agent_scratchpad")
 ])
 
 # 5. Create agent with error handling
 agent = create_sql_agent(
-    llm=llm_model,
+    llm=llm,
     db=db,
     prompt=prompt,
     agent_type="openai-tools",
-    verbose=False,
-    max_iterations=3,
+    verbose=True,  # Set to True for debugging
+    max_iterations=10,  # Increased from 3 to 10
     handle_parsing_errors=True,
     return_intermediate_steps=False
 )
