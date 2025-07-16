@@ -94,41 +94,34 @@ agent = create_sql_agent(
 # 6. Enhanced query processing
 def process_query(question):
     try:
-        # Block harmful queries
         blocked_terms = ["drop", "delete", "insert", "update", "alter", ";--"]
         if any(term in question.lower() for term in blocked_terms):
             raise ValueError("Data modification queries are disabled")
             
-        # Get the database schema to include in the prompt
         schema = db.get_table_info()
-        response = agent.invoke({
-            "input": question,
-            "schema": schema  # Add the schema to the input
-        })
+        response = agent.invoke({"input": question, "schema": schema})
         result = response['output']
         
-        # Clean common Gemini artifacts
         if "```sql" in result:
             result = result.split("```")[-2].replace("```sql", "").strip()
         return result
         
     except Exception as e:
-        error_message = str(e)
-        # Format the error output nicely
-        return f""" **Error Processing Query**  
-        
-{error_message}  
+        if "max iterations" in str(e).lower():
+            return "🔁 **Query too complex**\n\nTry breaking it into simpler questions like:\n- 'List customers from Spain'\n- 'Show orders from January 2024'"
+        else:
+            return f"❌ Error: {str(e)}"
 
-💡 **Try rephrasing your question like:**  
+ **Try rephrasing your question like:**  
 - "Show customers from France"  
 - "List products needing restock"  
 - "Which employees report to Diane Murphy?"  
 - "What are our top 5 selling products?"  
 
-📝 **Tips:**  
-• Use simple, clear questions  
-• Focus on customers, products, orders, or employees  
-• Avoid special characters or complex syntax"""
+ **Tips:**  
+• "Use simple, clear questions" 
+• "Focus on customers, products, orders, or employees"  
+• "Avoid special characters or complex syntax"
 
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
