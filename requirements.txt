@@ -1,5 +1,7 @@
+langchain-core>=0.1.0
+langchain-community>=0.0.1
+langchain-google-genai>=0.0.1
+gradio>=4.0.0
 google-generativeai>=0.3.0
-gradio>=3.0.0
-python-dotenv>=0.19.0
-
-#functools
+sqlalchemy>=2.0.0
+python-dotenv>=1.0.0
