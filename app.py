@@ -81,7 +81,7 @@ prompt = ChatPromptTemplate.from_messages([
 
 # 5. Create agent with error handling
 agent = create_sql_agent(
-    llm=llm,
+    llm=llm_model,
     db=db,
     prompt=prompt,
     agent_type="openai-tools",
