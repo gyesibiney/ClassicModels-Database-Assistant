@@ -92,6 +92,7 @@ agent = create_sql_agent(
     max_iterations=10,
     handle_parsing_errors=True,
     return_intermediate_steps=False
+)
 
 
 # 6. Enhanced query processing
