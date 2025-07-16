@@ -118,7 +118,7 @@ def process_query(question):
 - "Which employees report to Diane Murphy?"  
 - "What are our top 5 selling products?"  
 
- **Tips:**  
+**Tips:**  
 • "Use simple, clear questions" 
 • "Focus on customers, products, orders, or employees"  
 • "Avoid special characters or complex syntax"
