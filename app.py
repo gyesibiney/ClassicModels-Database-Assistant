@@ -1,12 +1,47 @@
 import google.generativeai as genai
-from dotenv import load_dotenv
+from langchain_community.agent_toolkits import create_sql_agent
+from langchain_community.utilities import SQLDatabase
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate,MessagesPlaceholder
+from sqlalchemy import create_engine, MetaData
+import gradio as gr
 import os
 import sqlite3
-import re
-import gradio as gr
-import time
-from functools import lru_cache
+import shutil
 
+# 1. Handle database file properly
+DB_NAME = "classicmodels.db"
+
+# Ensure we're working with the correct file
+if not os.path.exists(DB_NAME):
+    for file in os.listdir():
+        if file.startswith("classicmodels") and file.endswith(".db"):
+            shutil.copy(file, DB_NAME)
+            print(f"Using database file: {file}")
+            break
+
+# Verify connection
+try:
+    conn = sqlite3.connect(DB_NAME)
+    tables = conn.cursor().execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    conn.close()
+    print(f"Database connected. Tables: {[t[0] for t in tables]}")
+except Exception as e:
+    print(f"Database error: {str(e)}")
+    raise
+
+
+# 2. Configure SQLDatabase
+db = SQLDatabase.from_uri(
+    f"sqlite:///{DB_NAME}",
+    include_tables=[
+        'productlines', 'products', 'offices',
+        'employees', 'customers', 'payments',
+        'orders', 'orderdetails'
+    ],
+    sample_rows_in_table_info=1,
+    view_support=False
+)
 
 # This will automatically get the secret from Hugging Face
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -17,185 +52,113 @@ if not GEMINI_API_KEY:
 #genai.configure(api_key=GEMINI_API_KEY)
 
 # Load Gemini API key
-load_dotenv()
-model = genai.GenerativeModel("gemini-2.0-flash-001")
+#load_dotenv()
+#model = genai.GenerativeModel("gemini-2.0-flash-001")
 
-# Database schema detection with caching
-@lru_cache(maxsize=1)
-def get_schema():
-    conn = sqlite3.connect("classicmodels.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    schema = {}
-    for table in cursor.fetchall():
-        table_name = table[0]
-        cursor.execute(f"PRAGMA table_info({table_name});")
-        schema[table_name] = [col[1] for col in cursor.fetchall()]
-    conn.close()
-    return schema
+# 4. Initialize LLM with UPDATED model name
+llm_model = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash-001",  # Updated model name
+    temperature=0.3,
+    google_api_key=api_key,
+    max_output_tokens=2048,
+    top_k=40,
+    top_p=0.95
+)
 
-SCHEMA = get_schema()
 
-# Database operations with timeout
-def query_db(query, args=(), timeout=5):
+# 4. Proper prompt template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a ClassicModels database expert. Follow these rules:
+1. Use these relationships:
+   - customers → orders → orderdetails → products → productlines
+   - employees → offices
+   - customers → payments
+2. Format currency as USD ($1,000.00)
+3. Use dates as YYYY-MM-DD
+4. Never modify data
+5. Schema: {schema}"""),
+    ("human", "{input}"),
+    MessagesPlaceholder("agent_scratchpad")
+])
+
+# 5. Create agent with error handling
+agent = create_sql_agent(
+    llm=llm_model,
+    db=db,
+    prompt=prompt,
+    agent_type="openai-tools",
+    verbose=False,
+    max_iterations=3,
+    handle_parsing_errors=True,
+    return_intermediate_steps=False
+)
+
+# 6. Enhanced query processing
+def process_query(question):
     try:
-        conn = sqlite3.connect("classicmodels.db", timeout=timeout)
-        cursor = conn.cursor()
-        cursor.execute(query, args)
-        results = cursor.fetchall()
-        conn.close()
-        return results
-    except sqlite3.Error as e:
-        raise Exception(f"Database error: {str(e)}")
-
-# Pre-defined quick queries
-QUICK_QUERIES = {
-    r'list (?:the )?offices': {
-        'query': "SELECT officeCode, city, country, phone FROM offices",
-        'format': lambda r: "\n".join([f"{row[0]}: {row[1]}, {row[2]} (Phone: {row[3]})" for row in r])
-    },
-    r'list (?:the )?products': {
-        'query': "SELECT productName, productLine, buyPrice FROM products ORDER BY productName LIMIT 20",
-        'format': lambda r: "First 20 products:\n" + "\n".join([f"- {row[0]} ({row[1]}) - ${row[2]:,.2f}" for row in r])
-    },
-    r'count (?:the )?(employees|customers|products|offices)': {
-        'query': lambda m: f"SELECT COUNT(*) FROM {m.group(1)}",
-        'format': lambda r, m: f"There are {r[0][0]} {m.group(1)} in the database"
-    }
-}
-
-def handle_quick_query(prompt):
-    prompt_lower = prompt.lower()
-    for pattern, handler in QUICK_QUERIES.items():
-        match = re.search(pattern, prompt_lower)
-        if match:
-            query = handler['query'](match) if callable(handler['query']) else handler['query']
-            results = query_db(query)
-            return handler['format'](results, match) if 'm' in handler['format'].__code__.co_varnames else handler['format'](results)
-    return None
-
-# Special question handlers (now properly defined)
-def handle_special_query(prompt):
-    prompt_lower = prompt.lower()
-    
-    # Top products by price
-    if re.search(r'top \d+ (?:most )?expensive products', prompt_lower):
-        limit = int(re.search(r'top (\d+)', prompt_lower).group(1))
-        products = query_db(f"""
-            SELECT productName, buyPrice 
-            FROM products 
-            ORDER BY buyPrice DESC 
-            LIMIT {limit}
-        """)
-        if not products:
-            return "No products found."
-        response = [f"Top {limit} most expensive products:"]
-        for i, (name, price) in enumerate(products, 1):
-            response.append(f"{i}. {name} - ${price:,.2f}")
-        return "\n".join(response)
-    
-    # Products out of stock
-    if "out of stock" in prompt_lower:
-        products = query_db("""
-            SELECT productName, quantityInStock 
-            FROM products 
-            WHERE quantityInStock = 0
-        """)
-        if not products:
-            return "All products are in stock."
-        return "Out of stock products:\n" + "\n".join(f"- {row[0]}" for row in products)
-    
-    return None
-
-def extract_sql(text):
-    """Robust SQL extraction with validation"""
-    match = re.search(
-        r'(SELECT\s.+?;)',
-        text,
-        re.IGNORECASE | re.DOTALL
-    )
-    if not match:
-        raise Exception("No valid SQL found in response")
-    return match.group(1).strip()
-
-def chatbot(prompt):
-    start_time = time.time()
-    
-    # First try quick handlers
-    if (response := handle_quick_query(prompt)):
-        print(f"Quick query took {time.time()-start_time:.2f}s")
-        return response
-    
-    # Then try special handlers
-    if (response := handle_special_query(prompt)):
-        print(f"Special query took {time.time()-start_time:.2f}s")
-        return response
-    
-    # Finally use Gemini for complex queries
-    try:
-        response = model.generate_content(
-            f"""Convert this query to efficient SQLite SQL using schema: {SCHEMA}.
-            Return ONLY the SQL query, no explanations.
-            Query: '{prompt}'""",
-            generation_config={"temperature": 0.1}
-        )
+        # Block harmful queries
+        blocked_terms = ["drop", "delete", "insert", "update", "alter", ";--"]
+        if any(term in question.lower() for term in blocked_terms):
+            raise ValueError("Data modification queries are disabled")
+            
+        # Get the database schema to include in the prompt
+        schema = db.get_table_info()
+        response = agent.invoke({
+            "input": question,
+            "schema": schema  # Add the schema to the input
+        })
+        result = response['output']
         
-        sql_query = extract_sql(response.text)
-        print("[DEBUG] Generated SQL:", sql_query)
-        
-        if not sql_query.strip().upper().startswith('SELECT'):
-            raise Exception("Only SELECT queries are allowed")
-        
-        results = query_db(sql_query, timeout=10)
-        
-        if not results:
-            return "No matching records found."
-        
-        # Format results
-        if len(results[0]) == 1:  # Single column
-            items = [str(row[0]) for row in results[:20]]
-            response = "\n".join(f"- {item}" for item in items)
-            if len(results) > 20:
-                response += f"\n...showing 20 of {len(results)} total results"
-            return response
-        
-        # Multi-column
-        explanation = model.generate_content(
-            f"Summarize these results in one sentence: {results[:5]}",
-            generation_config={"temperature": 0.2}
-        )
-        print(f"Complex query took {time.time()-start_time:.2f}s")
-        return explanation.text
+        # Clean common Gemini artifacts
+        if "```sql" in result:
+            result = result.split("```")[-2].replace("```sql", "").strip()
+        return result
         
     except Exception as e:
-        return f"Error: {str(e)}"
+        error_message = str(e)
+        # Format the error output nicely
+        return f""" **Error Processing Query**  
+        
+{error_message}  
 
-# Gradio Interface
+💡 **Try rephrasing your question like:**  
+- "Show customers from France"  
+- "List products needing restock"  
+- "Which employees report to Diane Murphy?"  
+- "What are our top 5 selling products?"  
+
+📝 **Tips:**  
+• Use simple, clear questions  
+• Focus on customers, products, orders, or employees  
+• Avoid special characters or complex syntax"""
+
+
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("""# Database Expert Chatbot""")
+    gr.Markdown("""
+    #  ClassicModels Database Assistant
+    *Natural language interface for the ClassicModels ERP system*
+    """)
+    
     with gr.Row():
-        with gr.Column():
-            question = gr.Textbox(label="Ask anything about the database", 
-                                placeholder="e.g., List offices, Show top products...")
-            submit_btn = gr.Button("Search", variant="primary")
-        with gr.Column():
-            output = gr.Textbox(label="Response", interactive=False)
+        query = gr.Textbox(label="Ask about products, customers, or orders", 
+                         placeholder="e.g., 'Show motorcycle products with low stock'")
+        output = gr.Textbox(label="Results", lines=5)
     
     examples = gr.Examples(
         examples=[
-            "List the offices",
-            "Show top 5 most expensive products",
-            "Which products are out of stock?",
-            "Count customers from France"
+            "List all classic cars under $50",
+            "Show customers who haven't ordered in 6 months",
+            "Which office has the most employees?",
+            "Find orders with missing payments"
         ],
-        inputs=question
+        inputs=query
     )
     
-    submit_btn.click(
-        chatbot,
-        inputs=question,
-        outputs=output
-    )
+    # Add a submit button
+    submit_btn = gr.Button("Submit", variant="primary")
+    submit_btn.click(fn=process_query, inputs=query, outputs=output)
+    
+    # Keep the enter-key submission as well
+    query.submit(fn=process_query, inputs=query, outputs=output)
 
-if __name__ == "__main__":
-    demo.launch()
+demo.launch(debug=True)
