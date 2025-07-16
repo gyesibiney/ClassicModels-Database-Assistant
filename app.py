@@ -66,15 +66,18 @@ llm_model = ChatGoogleGenerativeAI(
 )
 
 
+
 # 4. Proper prompt template
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a SQL expert analyzing the ClassicModels database. Follow these rules:
-1. Use simple, direct SQL queries when possible.
-2. If a query fails, try a different approach instead of retrying.
-3. Schema: {schema}
-4. Available tables: products, customers, orders, employees, offices, payments, orderdetails, productlines.
-5. Never modify data.
-6. Respond concisely."""),
+    ("system", """You are a ClassicModels database expert. Follow these rules:
+1. Use these relationships:
+   - customers → orders → orderdetails → products → productlines
+   - employees → offices
+   - customers → payments
+2. Format currency as USD ($1,000.00)
+3. Use dates as YYYY-MM-DD
+4. Never modify data
+5. Schema: {schema}"""),
     ("human", "{input}"),
     MessagesPlaceholder("agent_scratchpad")
 ])
@@ -85,11 +88,11 @@ agent = create_sql_agent(
     db=db,
     prompt=prompt,
     agent_type="openai-tools",
-    verbose=True,  # Set to True for debugging
-    max_iterations=10,  # Increased from 3 to 10
+    verbose=False,
+    max_iterations=10,
     handle_parsing_errors=True,
     return_intermediate_steps=False
-)
+
 
 # 6. Enhanced query processing
 def process_query(question):
@@ -103,7 +106,7 @@ def process_query(question):
         schema = db.get_table_info()
         response = agent.invoke({
             "input": question,
-            "schema": schema
+            "schema": schema  # Add the schema to the input
         })
         result = response['output']
         
@@ -114,26 +117,26 @@ def process_query(question):
         
     except Exception as e:
         error_message = str(e)
-        if "max iterations" in error_message.lower():
-            return (
-                "🔁 **Query Too Complex**\n\n"
-                "Try simpler questions like:\n"
-                "- 'Show customers from France'\n"
-                "- 'List products below $100'"
-            )
-        else:
-            return (
-                "🚨 **Error**\n\n"
-                f"{error_message}\n\n"
-                "💡 **Try these instead:**\n"
-                "- 'Which products are out of stock?'\n"
-                "- 'Show orders from last month'"
-            )
+        # Format the error output nicely
+        return f""" **Error Processing Query**  
+        
+{error_message}  
 
-            
+ **Try rephrasing your question like:**  
+- "Show customers from France"  
+- "List products needing restock"  
+- "Which employees report to Diane Murphy?"  
+- "What are our top 5 selling products?"  
+
+ **Tips:**  
+• Use simple, clear questions  
+• Focus on customers, products, orders, or employees  
+• Avoid special characters or complex syntax"""    
+    
+    
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
     gr.Markdown("""
-    #  ClassicModels Database Assistant
+    # 🏭 ClassicModels Database Assistant
     *Natural language interface for the ClassicModels ERP system*
     """)
     
