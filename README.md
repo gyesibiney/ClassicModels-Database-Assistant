@@ -1,13 +1,13 @@
 # 🏭 ClassicModels Database Assistant
 
-[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue.svg)](https://huggingface.co/spaces/your-username/classicmodels-assistant)  
+[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue.svg)](https://huggingface.co/spaces/gyesibiney/classicmodels-assistant)  
 *Natural language SQL interface deployed on Hugging Face Spaces*
 
 ![Gradio Interface Screenshot](https://i.imgur.com/example-screenshot.png)
 
 ## 🌐 Live Demo
 Access the production deployment:  
-👉 [https://huggingface.co/spaces/your-username/classicmodels-assistant](https://huggingface.co/spaces/your-username/classicmodels-assistant)
+👉 [https://huggingface.co/spaces/gyesibiney/classicmodels-assistant](https://huggingface.co/spaces/your-username/classicmodels-assistant)
 
 ## 🚀 Key Features
 - **Zero-Setup Access**: Fully hosted on Hugging Face
@@ -39,8 +39,6 @@ DB_NAME = "classicmodels.db"  # Automatically persists between deploys
    
 
 ```
-
-
 
 
 
