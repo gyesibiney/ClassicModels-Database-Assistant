@@ -23,7 +23,7 @@ Access the production deployment:
 2. Database is pre-loaded in the Space's persistent storage:
 ```python
 DB_NAME = "classicmodels.db"  # Automatically persists between deploys
-```
+
 📦 Files Included
 /Repository
 ├── app.py               # Main application
@@ -38,7 +38,7 @@ DB_NAME = "classicmodels.db"  # Automatically persists between deploys
 "Which sales rep has the most pending orders?"
    
 
-
+```
 
 
 
