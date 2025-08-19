@@ -1,51 +1,40 @@
-🏭 Chat_DataBase_v1
-Natural Language SQL Assistant for the ClassicModels Database
+# 🏭 Chat_DataBase_v1
+**Natural Language SQL Assistant for the ClassicModels Database**
 
+---
 
-🚀 Overview
-Chat_DataBase_v1 is an interactive chatbot that connects to the ClassicModels sample database and allows users to query it using natural language.
-It leverages LangChain, Google Gemini API, and Gradio to provide a conversational interface for exploring customers, orders, products, employees, and more—without writing SQL manually.
+## 🚀 Overview
+**Chat_DataBase_v1** is an interactive chatbot that connects to the **ClassicModels** sample database and allows users to query it using **natural language**.  
 
-✨ Features
-💬 Natural Language to SQL: Ask business questions without SQL knowledge.
+It uses:  
+- **LangChain** for LLM orchestration  
+- **Google Gemini API** for natural language → SQL  
+- **Gradio** for a clean and interactive UI  
 
-🔗 Relational Awareness: Predefined schema relationships:
+---
 
-customers → orders → orderdetails → products → productlines
+## ✨ Features
+- 💬 **Natural Language to SQL** – Ask business questions without writing SQL.  
+- 🔗 **Relational Awareness** – Supports schema links:  
+  - `customers → orders → orderdetails → products → productlines`  
+  - `employees → offices`  
+  - `customers → payments`  
+- 💵 **Smart Formatting** –  
+  - Currency shown in **USD** (`$1,000.00`)  
+  - Dates in `YYYY-MM-DD` format  
+- 🔒 **Read-Only Queries** – Prevents destructive queries (`INSERT`, `UPDATE`, `DELETE`).  
+- 🎨 **Clean Gradio UI** with **ready-to-use examples**.  
 
-employees → offices
+---
 
-customers → payments
+## 📊 Example Queries
+Here are some queries you can try:  
 
-💵 Smart Formatting:
-
-Currency in USD ($1,000.00)
-
-Dates in YYYY-MM-DD format
-
-🔒 Read-Only Queries: Data modification (INSERT, UPDATE, DELETE) is blocked.
-
-🎨 Clean UI: Powered by Gradio with ready-to-use examples.
-
-🛠️ Tech Stack
-LLM: Google Gemini 2.0 Flash
-
-Frameworks: LangChain, Gradio
-
-Database: SQLite (classicmodels.db)
-
-Hosting: Hugging Face Spaces
-
-📊 Example Queries
-Try asking:
-
-"List all classic cars under $50"
-
-"Show customers who haven’t ordered in 6 months"
-
-"Which office has the most employees?"
-
-"Find orders with missing payments"
+```text
+- List all classic cars under $50
+- Show customers who haven’t ordered in 6 months
+- Which office has the most employees?
+- Find orders with missing payments
 
 📂 Project Structure
 bash
@@ -57,15 +46,15 @@ Edit
  ┣ 📜 requirements.txt     # Dependencies
  ┗ 📜 README.md            # Project documentation
 🔑 Setup on Hugging Face
-Clone the repository or open in Hugging Face Spaces.
+Clone the repository or open directly in Hugging Face Spaces.
 
 Add your Gemini API Key in the Space settings → Secrets:
 
-ini
+bash
 Copy
 Edit
 GEMINI_API_KEY = your_google_api_key
-Run the Space. The app will automatically detect and load classicmodels.db.
+Run the Space – the app will automatically detect and load classicmodels.db.
 
 🙌 Credits
 Database: ClassicModels Sample DB
@@ -76,6 +65,8 @@ LLM: Google Gemini
 
 🌐 Live Demo
 👉 Open Chat_DataBase_v1 on Hugging Face
+
+
 
 
 
