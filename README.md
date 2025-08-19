@@ -38,8 +38,7 @@ Here are some queries you can try:
 
 📂 Project Structure
 bash
-Copy
-Edit
+
 📦 Chat_DataBase_v1
  ┣ 📜 app.py               # Main application logic
  ┣ 📜 classicmodels.db     # SQLite database (auto-detected)
@@ -51,8 +50,7 @@ Clone the repository or open directly in Hugging Face Spaces.
 Add your Gemini API Key in the Space settings → Secrets:
 
 bash
-Copy
-Edit
+
 GEMINI_API_KEY = your_google_api_key
 Run the Space – the app will automatically detect and load classicmodels.db.
 
@@ -60,17 +58,6 @@ Run the Space – the app will automatically detect and load classicmodels.db.
 Database: ClassicModels Sample DB
 
 Frameworks: LangChain, Gradio
-
-LLM: Google Gemini
-
-🌐 Live Demo
-👉 Open Chat_DataBase_v1 on Hugging Face
-
-
-
-
-
-
 
 ---
 title: Chat DataBase V1
@@ -84,3 +71,10 @@ pinned: false
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
+
+
+LLM: Google Gemini
+
+🌐 Live Demo
+👉 Open Chat_DataBase_v1 on Hugging Face
