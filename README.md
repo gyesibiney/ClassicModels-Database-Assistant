@@ -2,30 +2,14 @@
 Natural Language SQL Assistant for the ClassicModels Database
 
 
-📌 Overview
-This project provides a chat-based SQL assistant for the ClassicModels ERP-style database.
-It uses Google Gemini (via langchain_google_genai) and LangChain’s SQL agent toolkit to translate natural language queries into SQL queries.
-The assistant enables users to explore the ClassicModels database with simple English questions.
+🚀 Overview
+Chat_DataBase_v1 is an interactive chatbot that connects to the ClassicModels sample database and allows users to query it using natural language.
+It leverages LangChain, Google Gemini API, and Gradio to provide a conversational interface for exploring customers, orders, products, employees, and more—without writing SQL manually.
 
-🚀 Features
-🔍 Ask in plain English: "Show customers from France", "List products needing restock"
+✨ Features
+💬 Natural Language to SQL: Ask business questions without SQL knowledge.
 
-📊 Query supported tables:
-
-productlines, products, offices
-
-employees, customers, payments
-
-orders, orderdetails
-
-🛡️ Safe by design: Blocks data modification queries (INSERT, DELETE, DROP, etc.)
-
-💵 Auto-formatting: Currency in USD ($1,000.00), dates as YYYY-MM-DD
-
-🧩 Interactive Gradio UI: Easy-to-use input box with example queries
-
-📂 Database Schema
-Key relationships include:
+🔗 Relational Awareness: Predefined schema relationships:
 
 customers → orders → orderdetails → products → productlines
 
@@ -33,48 +17,67 @@ employees → offices
 
 customers → payments
 
-⚙️ Tech Stack
+💵 Smart Formatting:
+
+Currency in USD ($1,000.00)
+
+Dates in YYYY-MM-DD format
+
+🔒 Read-Only Queries: Data modification (INSERT, UPDATE, DELETE) is blocked.
+
+🎨 Clean UI: Powered by Gradio with ready-to-use examples.
+
+🛠️ Tech Stack
 LLM: Google Gemini 2.0 Flash
 
-Frameworks:
+Frameworks: LangChain, Gradio
 
-LangChain
+Database: SQLite (classicmodels.db)
 
-Gradio
+Hosting: Hugging Face Spaces
 
-Database: classicmodels.db (SQLite)
+📊 Example Queries
+Try asking:
 
-Deployment: Hugging Face Spaces
-
-🔑 Setup
-Clone the repository or open the Space.
-
-Ensure the ClassicModels database file (classicmodels.db) is present in the working directory.
-
-Set up Hugging Face secrets:
-
-bash
-GEMINI_API_KEY = "your_google_api_key"
-Install dependencies:
-
-bash
-pip install -r requirements.txt
-▶️ Usage
-Run locally with:
-
-bash
-python app.py
-Or open directly in Hugging Face Space:
-👉 Chat_DataBase_v1
-
-💡 Example Queries
 "List all classic cars under $50"
 
-"Show customers who haven't ordered in 6 months"
+"Show customers who haven’t ordered in 6 months"
 
 "Which office has the most employees?"
 
 "Find orders with missing payments"
+
+📂 Project Structure
+bash
+Copy
+Edit
+📦 Chat_DataBase_v1
+ ┣ 📜 app.py               # Main application logic
+ ┣ 📜 classicmodels.db     # SQLite database (auto-detected)
+ ┣ 📜 requirements.txt     # Dependencies
+ ┗ 📜 README.md            # Project documentation
+🔑 Setup on Hugging Face
+Clone the repository or open in Hugging Face Spaces.
+
+Add your Gemini API Key in the Space settings → Secrets:
+
+ini
+Copy
+Edit
+GEMINI_API_KEY = your_google_api_key
+Run the Space. The app will automatically detect and load classicmodels.db.
+
+🙌 Credits
+Database: ClassicModels Sample DB
+
+Frameworks: LangChain, Gradio
+
+LLM: Google Gemini
+
+🌐 Live Demo
+👉 Open Chat_DataBase_v1 on Hugging Face
+
+
 
 
 
