@@ -80,5 +80,5 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 LLM: Google Gemini
 
 🌐 Live Demo
-👉 Open Chat_DataBase_v1 on Hugging Face
+👉 Open [Open App](https://huggingface.co/spaces/gyesibiney/Chat_DataBase_v1)
 
