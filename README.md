@@ -54,6 +54,8 @@ bash
 GEMINI_API_KEY = your_google_api_key
 Run the Space – the app will automatically detect and load classicmodels.db.
 
+```
+
 🙌 Credits
 Database: ClassicModels Sample DB
 
